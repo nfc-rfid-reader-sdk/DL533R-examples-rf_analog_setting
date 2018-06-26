@@ -48,6 +48,7 @@ BOOL PR533_activate(void)
 	retVal = SCardEstablishContext(SCARD_SCOPE_USER, NULL, NULL, &ContextHnd);
 	if (retVal != SCARD_S_SUCCESS)
 	{
+		printf("SCardEstablishContext error = %x\n", retVal);
 		return FALSE;
 	}
 	else
@@ -69,17 +70,16 @@ BOOL PR533_activate(void)
 					retVal = SCardConnectA(ContextHnd, (LPCSTR) "NXP PR533 0",
 					SCARD_SHARE_DIRECT, ProtocolType, &CardHandle, (LPDWORD) &ActiveProtocol);
 
-					retVal =
-							SCardControl(CardHandle, IOCTL_CCID_ESCAPE, stop_ACD, sizeof(stop_ACD), pResponseBuffer, 255, (LPDWORD) &ResponseBufferLength);
+					SCardControl(CardHandle, IOCTL_CCID_ESCAPE, stop_ACD, sizeof(stop_ACD), pResponseBuffer, 255, (LPDWORD) &ResponseBufferLength);
 
 					Sleep(20);
 
-					retVal =
-							SCardControl(CardHandle, IOCTL_CCID_ESCAPE, start_ACD, sizeof(start_ACD), pResponseBuffer, 255, (LPDWORD) &ResponseBufferLength);
+					SCardControl(CardHandle, IOCTL_CCID_ESCAPE, start_ACD, sizeof(start_ACD), pResponseBuffer, 255, (LPDWORD) &ResponseBufferLength);
 
 					Sleep(50);
 
 					SCardReleaseContext(ContextHnd);
+					printf("SCardConnectA error = %x\n", retVal);
 					return FALSE;
 				}
 				else
@@ -89,6 +89,7 @@ BOOL PR533_activate(void)
 					if (retVal != SCARD_S_SUCCESS)
 					{
 						SCardReleaseContext(ContextHnd);
+						printf("PR533 get firmware version error = %x\n", retVal);
 						return FALSE;
 					}
 					else
@@ -96,6 +97,7 @@ BOOL PR533_activate(void)
 						if (pResponseBuffer[0] != 0x33)
 						{
 							SCardReleaseContext(ContextHnd);
+							printf("PR533 get firmware version wrong = %x\n", pResponseBuffer[0]);
 							return FALSE;
 						}
 						return TRUE;
@@ -105,12 +107,15 @@ BOOL PR533_activate(void)
 			else
 			{
 				SCardReleaseContext(ContextHnd);
+				printf("PR533 not found \n");
+				printf("Found %s\n", pmszReaders);
 				return FALSE;
 			}
 		}
 		else
 		{
 			SCardReleaseContext(ContextHnd);
+			printf("SCardListReadersA error = %x\n", retVal);
 			return FALSE;
 		}
 	}
